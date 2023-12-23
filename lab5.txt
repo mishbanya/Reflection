@@ -1,18 +1,118 @@
 // Degtyarev M.
 // 23.12.23
-// Github:
+// Github: https://github.com/mishbanya/Reflection.git
 
 
 //MAIN
 
+package somepackage;
+public class Main {
+    public static void main(String[] args) {
+        try {
+            Injector injector = new Injector();
+            SomeBean someBean1 = injector.inject(new SomeBean());
+            System.out.println("Тест 1:");
+            someBean1.foo();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
 
 //INJECTOR
 
+package somepackage;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.lang.reflect.*;
+import java.util.*;
+
+public class Injector {
+    private Properties properties;
+    public Injector() {
+        properties = new Properties();
+        try {
+            properties.load(new FileInputStream("config.properties"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public <T> T inject(T object) throws Exception {
+        Class<?> clazz = object.getClass();
+        for (Field field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(AutoInjectable.class)) {
+                field.setAccessible(true);
+                Class<?> fieldType = field.getType();
+                String implementationName = properties.getProperty(fieldType.getName());
+                if (implementationName == null) {
+                    throw new IllegalArgumentException("Не найдена реализация для " + fieldType.getName());
+                }
+                Class<?> implClass = Class.forName(implementationName);
+                Object implInstance = implClass.getDeclaredConstructor().newInstance();
+                field.set(object, implInstance);
+            }
+        }
+        return object;
+    }
+}
 
 //AUTOINJECTABLE
 
+package somepackage;
+import java.lang.annotation.*;
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+public @interface AutoInjectable {
+}
 
 //config.properties
 
+somepackage.SomeInterface=somepackage.SomeImpl
+somepackage.SomeOtherInterface=somepackage.SODoer
 
 //ИНТЕРФЕЙСЫ И ИМПЛЕМЕНТАЦИИ (ИЗ УСЛОВИЯ)
+
+package somepackage;
+public interface SomeInterface {
+    void doSomething();
+}
+
+package somepackage;
+public interface SomeOtherInterface {
+    void doSomeOther();
+}
+
+package somepackage;
+public class SomeImpl implements SomeInterface {
+    public void doSomething() {
+        System.out.println("A");
+    }
+}
+
+package somepackage;
+public class OtherImpl implements SomeInterface {
+    public void doSomething() {
+        System.out.println("B");
+    }
+}
+
+package somepackage;
+import somepackage.SomeOtherInterface;
+public class SODoer implements SomeOtherInterface {
+    public void doSomeOther() {
+        System.out.println("C");
+    }
+}
+
+package somepackage;
+public class SomeBean {
+    @AutoInjectable
+    private SomeInterface field1;
+    @AutoInjectable
+    private SomeOtherInterface field2;
+    public void foo() {
+        field1.doSomething();
+        field2.doSomeOther();
+    }
+}
