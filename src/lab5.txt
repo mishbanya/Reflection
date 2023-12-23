@@ -1,0 +1,18 @@
+// Degtyarev M.
+// 23.12.23
+// Github:
+
+
+//MAIN
+
+
+//INJECTOR
+
+
+//AUTOINJECTABLE
+
+
+//config.properties
+
+
+//ИНТЕРФЕЙСЫ И ИМПЛЕМЕНТАЦИИ (ИЗ УСЛОВИЯ)
